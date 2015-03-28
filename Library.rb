@@ -1,10 +1,11 @@
 #############################
 # VIP This file require collection.txt in the same folder 
 #############################
-
-
 require 'set'
-
+#______________________________________________________________________________________
+# Calendar class deal the passage of time
+# instance var :date using time class
+# fuction advance() Increment the date next day
 class Calendar
   # attr_accessor:date
   attr_reader(:date)
@@ -23,7 +24,8 @@ class Calendar
     return   @date
   end
 end
-
+#______________________________________________________________________________________
+# Book class has following instace variable :id, :title, :author :dueDate borrowPeriod
 class Book
   attr_reader(:id, :title, :author, :dueDate )
   def initialize(id,title,author)
@@ -50,7 +52,9 @@ class Book
     # @dueDate =  Calendar.new().get_date()+ @borrowPeriod
   end
 end
-
+#______________________________________________________________________________________
+# Member class has following instace variable :name, :bookBorrowed, :library
+# methods send_overdue_notice(notice) Tells this member that has overdue books.
 class Member
   attr_reader(:name, :bookBorrowed )
   def initialize(name,libraryName)
@@ -76,7 +80,11 @@ class Member
   end
 
 end
-
+#______________________________________________________________________________________
+# Library class a number of methods which are called by the "librarian" (the user), not by members
+# class var   @@books, @@isCalOn, @@isCollectionReaded @@members @@isLibOpen @@currentMembe
+# methods find_all_overdue_books() , issue_card(name_of_member), serve(name_of_member) 
+# check_in(*book_numbers),search(string),renew(*book_ids), close(),quit()
 class Library
   attr_reader(:calendar )
   @@books = []
@@ -131,10 +139,9 @@ def find_overdue_books()
           return
         end       
 end
-def check_in(book_numbers)################# TODO remouve from @@books add book id returned
-  puts "__________"
-  puts book_numbers
-  puts "__________"
+def check_in(book_numbers)
+  puts "Currrent Customer has "+ (book_numbers.to_s) +" book out"  
+  libIsOpen() 
   libIsOpen() 
   custIsServe()
   findBook = false
@@ -411,10 +418,15 @@ end
 
 
 
-###########################################START
+###########################################
+## START INTERACT WHIT THE APP
+###########################################
+
 begin
+### Open Library add member
+puts "### Open Library add member____________________________________________________"
 l=Library.new();
-puts " The Library Is open #{l.open()}"
+puts "The Library Is open #{l.open()}"
 puts "CALL l.getBookList() #{l.getBookList()}"
 puts "CALL l.addMember ugo #{l.addMember(:ugo, Member.new("ugo","bbkLib"))}"
 puts "CALL l.addMember pep #{l.addMember(:pep, Member.new("pep","bbkLib"))}"
@@ -422,27 +434,33 @@ puts "CALL l.addMember nino #{l.addMember(:nino, Member.new("nino","bbkLib"))}"
 puts "CALL l.calendar() #{l.calendar().get_date()}"
 
 ### Borrow Book
+puts "### Get Borrow Book and over due _______________________________________________"
 t=(l.calendar().get_date())+(7*24*60*60)
 puts "CALL l.getMember()[:ugo].check_out(l.getBookList()[0]) #{l.getMember()[:ugo].check_out(l.getBookList()[0])}"
 puts "CALL l.getBookList()[0].check_out(t) #{l.getBookList()[0].check_out(t)}"
-
 puts "CALL l.getMember()[:ugo].inspect #{l.getMember()[:ugo].inspect}"
-puts "CALl l.getMember()[:ugo].bookBorrowed[0].getId() #{l.getMember()[:ugo].bookBorrowed[0].getId()}"
-puts "CALl l.getMember()[:ugo].bookBorrowed[0].get_due_date #{l.getMember()[:ugo].bookBorrowed[0].get_due_date}"
-
+puts "CALL l.getMember()[:ugo].bookBorrowed[0].getId() #{l.getMember()[:ugo].bookBorrowed[0].getId()}"
+puts "CALL l.getMember()[:ugo].bookBorrowed[0].get_due_date #{l.getMember()[:ugo].bookBorrowed[0].get_due_date}"
 puts "CALL l.find_all_overdue_books() #{l.find_all_overdue_books()}"
 puts "CALL l.getMember()  #{ l.getMember() }"
 
-puts "call issue_card gino   #{l.issue_card('gino')}"
-puts "call issue_card 2   #{l.issue_card('gino')}"
-puts "call serve('gino')   #{l.serve('gino')}"
-puts "call serve('ugo')   #{l.serve('ugo')}"
-# puts "serve('kkk')   #{l.serve('kkk')}"
+### Issue card and serve customer
+puts "### Issue card and serve _______________________________________________________"
+puts "CALL issue_card gino #{l.issue_card('gino')}"
+puts "CALL issue_card gino again #{l.issue_card('gino')}"
+puts "CALL serve('gino') #{l.serve('gino')}"
+puts "CALL serve('ugo') #{l.serve('ugo')}"
+#puts "CALL serve('kkk') #{l.serve('kkk')}"#################################### to check
+
+### Check_in and search
+puts "### Check_in and search _______________________________________________"  
 puts "l.check_in(1)  #{l.check_in(1)} " 
 #puts "l.check_in(2)  #{l.check_in(2)} "
-puts l.search("   saga ArL tact  ttt1 ")
-puts l.search("   TTTT  autho ")
 
+puts "+++ l.search('   saga ArL tact  ttt1 ')  #{l.search("   saga ArL tact  ttt1 ")} " 
+#puts l.search("   saga ArL tact  ttt1 ") #################################### try
+#puts l.search("   TTTT  autho ")
+####################################################################TO DO
 puts "CALL check_out(book_ids 1) #{l.check_out(1)} "   
 puts "CALL check_out(book_ids 2) #{l.check_out(2)} "
 puts "CALL check_out(book_ids 3) #{l.check_out(3)} "      
