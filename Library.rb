@@ -110,7 +110,10 @@ class Library
   end  
   def getMember()
     return @@members
-  end 
+  end
+  def getIsCollectionReaded()
+     return @@isCollectionReaded
+  end  
   def addMember(name, obj)
     @@members[name] = obj
   end
@@ -120,6 +123,7 @@ class Library
   def custIsServe()
     (@@currentMember == nil) ? (raise Exception.new("No member is currently been served")) : return 
   end
+  
 # current member book out and over   
 def find_overdue_books() 
   libIsOpen()
@@ -153,7 +157,7 @@ def check_in(book_numbers)
     if  (@@currentMember.bookBorrowed()[i].id() == book_numbers )
         findBook = true #@@currentMember.bookBorrowed()[i] = nil #@@currentMember.bookBorrowed().delete(nil)
         @@currentMember.bookBorrowed().delete_at(i)
-        print "bookBorrowed()ARRAY is #{@@currentMember.bookBorrowed()}"
+        #print "bookBorrowed()ARRAY is #{@@currentMember.bookBorrowed()}"
         return "#{@@currentMember.name} has return book id #{book_numbers} "
     end 
   end  
@@ -256,21 +260,22 @@ def search(string)
      end
   end    
 for iB in 0 ... @@books.size
-  print "\n #{@@books[iB].id()} "+"#{@@books[iB].title()} "+"#{@@books[iB].author()}" 
+  #print "\n #{@@books[iB].id()} "+"#{@@books[iB].title()} "+"#{@@books[iB].author()}" 
   authorName = @@books[iB].author().split(' ').map(&:strip)
     searchBooks(authorName,s,foundBook,iB)
   titleName = @@books[iB].title.split(' ').map(&:strip)
     searchBooks(titleName,s,foundBook,iB)    
 end  
-puts"\n__________FOUND BOOK_____________"
+#puts"\n__________FOUND BOOK_____________"
   if (foundBook.size == 0)
     return "No books found."
   else
-     foundBook.each{|i| puts i}    
-  end  
-  return    
+    #foundBook.each{|i| puts i} 
+    foundBook.each{|i| result = result.to_s + (i.to_s)}          
+  end    
+  return result  
 end 
-
+ 
 # Returns either "Now serving name_of_member." or "name_of_member does not have a library card.".
   def serve(name_of_member) 
     libIsOpen()
@@ -377,7 +382,7 @@ end
   end
   # Read File with Exception Handling  
   def readFile()
-    if @@isCollectionReaded==false
+    #if @@isCollectionReaded==false########
       counter = 1
       begin
         file = File.new("collection.txt", "r")
@@ -393,7 +398,7 @@ end
         puts "Exception: #{err}"
         err
       end
-    end
+    #end#######
   end
   def makeBookList(i,id,title,author)
     @@books[i] = Book.new(id,title,author)
@@ -506,4 +511,8 @@ if(n.size > 0)
   end   
 end
 
-print "l.getCurrentMember.bookBorrowed "; print l.getCurrentMember.bookBorrowed.size  
+print "l.getCurrentMember.bookBorrowed "; print l.getCurrentMember.bookBorrowed.size   
+
+
+
+######################################################################## end
