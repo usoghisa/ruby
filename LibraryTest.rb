@@ -44,7 +44,8 @@ class LibraryTest < Test::Unit::TestCase
     @l.addMember(:ugo, Member.new("ugo","bbkLib"))
     @l.serve('ugo')
     # set date to be overdue on book1 VIP ####################
-    due =(@l.calendar().get_date())-(7*24*60*60) 
+    
+    due =(@l.getCalendar().get_date())-(7*24*60*60) 
     puts "CALL @l.getBookList()[0].check_out(due)#{@l.getBookList()[0].check_out(due)}"
     puts "CALL @l.getCurrentMember().check_out(@l.getBookList()[0])#{@l.getCurrentMember().check_out(@l.getBookList()[0])}"
     expectT = 1 
@@ -54,7 +55,13 @@ class LibraryTest < Test::Unit::TestCase
     expectT = Array
     assert_equal(expectT, @l.loopBookArray(@l.getCurrentMember()).class ,msg="expect Array")
     expectT = "bookTitle1" 
-    assert_equal(expectT, overDueArray[1][0].title() ,msg="esp__________book overdue title")       
+    assert_equal(expectT, overDueArray[1][0].title() ,msg="esp__________book overdue title") 
+    
+    puts "CALL find_all_overdue_books() #{@l.find_all_overdue_books()}"
+    
+    
+    
+          
   end
   def test_libIsOpen() 
     @l.open()
@@ -127,10 +134,39 @@ def test_on_search()
   expectT = "id: 4, title Contact Alien, by Author Carl Sagan" 
   assert_equal(expectT, @l.search('   saga ArLc tact  ttt1 ') ,msg="___books found.") 
   
-  expectT = "id: 1, title bookTitle1, by Author author1id: 2, title bookTitle2, by Author author2id: 3, title bookTitle3, by Author author3id: 5, title bookTitle4, by Author author4"
+  expectT = "id: 1, title bookTitle1, by Author author1id: 2, title bookTitle2, by Author author2id: 3, title bookTitle3, by Author author3id: 5, title bookTitle5, by Author author5"
   assert_equal(expectT, @l.search('   TTTT  autho ') ,msg="___ multiple books found.") 
 end   
-  
+
+# test for exception trow if id is not in library, if library is close,if cust is served 
+# same book can not be chech-out 2 time, customer can not boroow more than three books
+# every book check_out() increase the array size of book borrowed 
+def test_on_check_out()
+  test_libIsOpen() 
+  test_on_custIsServe()
+  @l.issue_card('ugo'); @l.serve('ugo'); 
+    begin
+      @l.check_out(33)
+    rescue Exception => e # or you can test for specific exceptions
+      expect1="The library does not have book id 33"
+      assert_equal(expect1, e.message)
+    end 
+    expectT = "The book with id 3 have been checked out to ugo." 
+    assert_equal(expectT,  @l.check_out(3) ,msg="___id 3 have been checked out")   
+    begin
+      @l.check_out(3)
+    rescue Exception => e # or you can test for specific exceptions
+      expect1 = "The library does not have book id 3"
+      assert_equal(expect1, e.message)
+    end 
+    expectT = 1 
+    assert_equal(expectT,  @l.getCurrentMember().bookBorrowed().size ,msg="___number of book borrow")
+    @l.check_out(1);@l.check_out(2)
+    expectT = 3 
+    assert_equal(expectT,  @l.getCurrentMember().bookBorrowed().size ,msg="___number of book borrow")
+    expectT = "Sorry ugo you check out 3 books already"
+    assert_equal(expectT,  @l.check_out(4) ,msg="___>3  books borrow")
+end    
   
   
   
