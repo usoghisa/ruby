@@ -86,18 +86,22 @@ end
 # methods find_all_overdue_books() , issue_card(name_of_member), serve(name_of_member) 
 # check_in(*book_numbers),search(string),renew(*book_ids), close(),quit()
 class Library
-  attr_reader(:calendar )
-  @@books = []
+  #attr_reader(:calendar )
+  @@books = Array[]
   @@isCalOn = false
   @@isCollectionReaded = false
-  @calendar = nil
+  @@calendar = nil
+  @@currentMember=nil 
   def initialize()
-    @calendar = Calendar.new()
+    #@@calendar = Calendar.new()
     createCalendar()
     readFile()
     @@members = Hash.new
     @@isLibOpen=false
-    @@currentMember=nil ###
+
+  end
+  def getCalendar()
+    return @@calendar
   end
   def getBookList()
     return @@books
@@ -124,7 +128,7 @@ class Library
     (@@currentMember == nil) ? (raise Exception.new("No member is currently been served")) : return 
   end
   
-# current member book out and over   
+# current member book out and over due   
 def find_overdue_books() 
   libIsOpen()
   custIsServe()
@@ -143,28 +147,61 @@ def find_overdue_books()
           return
         end       
 end
+
+def loopBookArray(member)
+      # [0] noOverDue [1] Overdue
+      bookOut=[[],[]]  
+      for i in 0 ... (member.get_books.size)
+        if  ((member.get_books.size > 0)&&
+        (member.get_books[i].dueDate <= @@calendar.get_date() ))
+        bookOut[1].push(member.get_books[i])
+        end
+      end
+      return bookOut
+end
+
+ 
+
+
 # return book, book_numbers is book id 
 def check_in(book_numbers)
-  #puts "Currrent Customer has "+ (book_numbers.to_s) +" book out"  
+  #puts "Current Customer has "+ (book_numbers.to_s) +" book out"  
   libIsOpen() 
   custIsServe()
+ 
   findBook = false
+  print (" BBB0 #{@@books[0]} \n")
+  print (" BBB1 #{@@books[1]} \n")
+  print (" BBB2 #{@@books[2]} \n")
+  print (" BBB3 #{@@books[3]} \n")
+  print (" BBB4 #{@@books[4]}  \n")
   if (@@currentMember.bookBorrowed().size == 0) 
     raise Exception.new(" The current member does't have book id #{book_numbers}")
     return 
-  end
-  for i in (0..(@@currentMember.bookBorrowed().size)-1)
-    if  (@@currentMember.bookBorrowed()[i].id() == book_numbers )
-        findBook = true #@@currentMember.bookBorrowed()[i] = nil #@@currentMember.bookBorrowed().delete(nil)
+  end 
+  for i in (0..(@@currentMember.bookBorrowed().size))
+    id = @@currentMember.bookBorrowed()[i].getId() 
+    if (id == book_numbers )
+        findBook = true
+        #r(book_numbers)###################################### TODO
         @@currentMember.bookBorrowed().delete_at(i)
-        #print "bookBorrowed()ARRAY is #{@@currentMember.bookBorrowed()}"
-        return "#{@@currentMember.name} has return book id #{book_numbers} "
+        return "#{@@currentMember.name} has return book id #{book_numbers} "   
     end 
-  end  
+  end 
   if(findBook == false)
      raise Exception.new(" The current member does't have book id #{book_numbers}")
   end  
 end
+
+def r(book_numbers)
+  for i in (0..(@@currentMember.bookBorrowed().size ))
+    if (@@currentMember.bookBorrowed()[i].getId() == book_numbers )
+        @@books[@@books.size]=(@@currentMember.bookBorrowed()[i])
+    end 
+  end 
+   return
+end 
+ 
 =begin
   Checks out the book to the member currently being served (there must be one!), or tells why the operation is not permitted. 
   The book_ids could have been found by a recent call to the search method. Checking out a book will involve both telling the book that
@@ -193,11 +230,7 @@ def check_out(book_ids) #1..n book_ids @@currentMember.name
     end 
   end
 if (findBook == false)
-  raise Exception.new("The library does not have book  id #{book_ids}")
-  
-  #if findBook == false
-   # findBook =  "The library does not have book  id #{book_ids}"
-   # return findBook
+  raise Exception.new("The library does not have book id #{book_ids}")
   else
    @@books.delete_at(removeIndex)
    return "The book with id #{book_ids} have been checked out to #{@@currentMember.name}." 
@@ -326,8 +359,8 @@ end
       raise Exception.new("The library is already open")
     else
       @@isLibOpen=true
-      @calendar.advance()
-      return "Today is day +1  #{@calendar.date()}"
+      #@@calendar.advance()
+      return "Today is day  #{@@calendar.get_date()}"
     end
   end
 def close()
@@ -344,18 +377,7 @@ def quit()
   #puts "overdue books #{find_overdue_books()}"
   return "The library is now closed for renovations"  
 end
-def loopBookArray(member)
-      # [0] noOverDue [1] Over
-      bookOut=[[],[]]   
-      for i in 0 ... member.get_books.size
-        if  ((member.get_books.size > 0)&&
-        (member.get_books[i].get_due_date() <= @calendar.get_date() ))
-          # bookOut[1].push(member.get_books[i].title())
-          bookOut[1].push(member.get_books[i])
-        end
-      end
-      return bookOut
-end
+
   
 =begin
   listing the names of members who have overdue books, and for each such member, the
@@ -364,22 +386,47 @@ end
   def find_all_overdue_books()
     libIsOpen() #puts @@books[1]
     bookOut=[[],[]]
-    name=""
+    overDueCust=""
+    noOverDueCust=""
+    result = ""
     getMember().each_pair do |key,obj|
       if obj.get_books.size == 0
-        print " #{key} Has No book overdue, \n"
+        noOverDueCust = noOverDueCust.to_s + key.to_s + " has No book overdue \n"
       end
-      # loopBookArray(member)
+      # loopBookArray(member), i is book detail 
       bookOut = loopBookArray(obj)
       if bookOut[1].size > 0
-        name= key
-        print "#{name} has overdue \n"
         bookOut[1].each do |i|
-          puts "#{i} , "
-        end 
+          overDueCust = overDueCust.to_s + key.to_s + " has overdue book " + i.to_s + "\n"
+        end   
       end     
     end
+    return print("#{overDueCust}" + "#{noOverDueCust}")
   end
+
+
+
+# Old version with print
+#  def find_all_overdue_books()
+#    libIsOpen() #puts @@books[1]
+#    bookOut=[[],[]]
+#    name=""
+#    getMember().each_pair do |key,obj|
+#      if obj.get_books.size == 0
+#        print " #{key} Has No book overdue, \n"
+#      end
+#      # loopBookArray(member)
+#      bookOut = loopBookArray(obj)
+#      if bookOut[1].size > 0
+#        name= key
+#        print "#{name} has overdue \n"
+#        bookOut[1].each do |i|
+#          puts "#{i} , "
+#        end 
+#      end     
+#    end
+#  end
+  
   # Read File with Exception Handling  
   def readFile()
     #if @@isCollectionReaded==false########
@@ -404,11 +451,11 @@ end
     @@books[i] = Book.new(id,title,author)
   end
 
-
+#
   def createCalendar()
     if @@isCalOn == false
-      @calendar = Calendar.new()
-      puts @calendar.get_date()
+      @@calendar = Calendar.new()
+      #puts @@calendar.get_date()
       @@isCalOn = true
       #puts @@isCalOn
     end
@@ -420,6 +467,15 @@ end
 ###########################################
 ## START INTERACT With THE APP
 ###########################################
+# Create an empty array.
+values = Array[]
+
+# Push two elements.
+values.push("tree")
+values.push("grass")
+print values
+
+
 
 begin
   ### Open Library add member 
@@ -430,18 +486,23 @@ begin
   puts "CALL l.addMember ugo #{l.addMember(:ugo, Member.new("ugo","bbkLib"))}"
   puts "CALL l.addMember pep #{l.addMember(:pep, Member.new("pep","bbkLib"))}"
   puts "CALL l.addMember nino #{l.addMember(:nino, Member.new("nino","bbkLib"))}"
-  puts "CALL l.calendar() #{l.calendar().get_date()}"
+  puts "CALL l.getCalendar #{l.getCalendar.get_date()}"
 rescue Exception => e; puts e.message ; end
 begin  
   ### Borrow Book
-  puts "### Get Borrow Book and over due _______________________________________________"
-  t=(l.calendar().get_date())+(7*24*60*60)
-  puts "CALL l.getMember()[:ugo].check_out(l.getBookList()[0]) #{l.getMember()[:ugo].check_out(l.getBookList()[0])}"
+  puts "### Get Borrowed Books and all overdue books _______________________________________________"
+  t=(l.getCalendar.get_date())-(7*24*60*60)# OVERDUE
+  puts "CALL l.getMember()[:ugo].check_out(l.getBookList()[0])check out a book #{l.getMember()[:ugo].check_out(l.getBookList()[0])}"
   puts "CALL l.getBookList()[0].check_out(t) #{l.getBookList()[0].check_out(t)}"
+  
+  puts "CALL l.getMember()[:ugo].check_out(l.getBookList()[0])check out a book #{l.getMember()[:ugo].check_out(l.getBookList()[1])}"
+  puts "CALL l.getBookList()[0].check_out(t) #{l.getBookList()[1].check_out(t)}"
+  
   puts "CALL l.getMember()[:ugo].inspect #{l.getMember()[:ugo].inspect}"
   puts "CALL l.getMember()[:ugo].bookBorrowed[0].getId() #{l.getMember()[:ugo].bookBorrowed[0].getId()}"
   puts "CALL l.getMember()[:ugo].bookBorrowed[0].get_due_date #{l.getMember()[:ugo].bookBorrowed[0].get_due_date}"
-  puts "CALL l.find_all_overdue_books() #{l.find_all_overdue_books()}"
+  puts "CALL l.find_all_overdue_books() "; puts "#{l.find_all_overdue_books()}"
+  
   puts "CALL l.getMember()  #{ l.getMember() }"
 rescue Exception => e; puts e.message ; end
 begin
@@ -453,9 +514,10 @@ puts "CALL serve('gino') #{l.serve('gino')}"
 puts "CALL serve('ugo') #{l.serve('ugo')}"
 puts "CALL serve('carl') #{l.serve('carl')}"
 rescue Exception => e; puts e.message ; end
+
 begin
 ### Check_in and search
-puts "### Check_in and search _______________________________________________"  
+puts "### Check_in and search _______________________________________________"
 puts "CALL l.check_in(1) #{l.check_in(1)} " 
 puts "CALL l.check_in(2) #{l.check_in(2)} "# it throws an exception
 rescue Exception => e; puts "CALL l.check_in(2)"+ e.message ; end
@@ -465,7 +527,7 @@ print "CALL l.search('   TTTT  autho ')"; print "#{l.search("   TTTT  autho ")} 
 
 ### Check_out and Renew 
 puts "#### Check_out and Renew _______________________________________________"
-begin 
+begin
 puts "CALL check_out(book_ids 1)"; puts" #{l.check_out(1)} " 
 puts "CALL check_out(book_ids 1)"; puts" #{l.check_out(1000)} " 
 rescue Exception => e; puts "CALL check_out(book_ids X)"+ e.message ; end
@@ -475,7 +537,6 @@ puts "CALL check_out(book_ids 4)"; puts" #{l.check_out(4)} "
 begin  puts "CALL renew(book_ids 1)"; puts" #{l.renew(1)} "; rescue Exception => e; puts "CALL check_out(book_ids X)"+ e.message ; end   
 begin  puts" #{l.renew(1000)} "; rescue Exception => e; puts "CALL renew(book_ids 1000)"+ e.message ; end
  
-
 ### Close Quit open Library 
 puts "#### Close Quit open Library _______________________________________________"
 begin  puts" #{l.close()} "; rescue Exception => e; puts "CALL l.close()"+ e.message ; end
@@ -489,11 +550,30 @@ begin puts"The custIsServe() #{l.custIsServe()}"; rescue Exception => e; puts "l
 puts "CALL serve('ugo')#{l.serve('ugo')}"
 puts "CALL l.getCurrentMember.name)#{l.getCurrentMember.name }"
 puts "CALL l.getCurrentMember.bookBorrowed #{l.getCurrentMember.bookBorrowed}"
-puts "CALL find_overdue_books()"; puts"  #{l.find_overdue_books()}"
+puts "CALL find_overdue_books() "; puts"  #{l.find_overdue_books()}"
+puts "NOW I MAKE OVERDUE BOOK ";
+t=(l.getCalendar.get_date())-(7*24*60*60)# OVERDUE 
+puts "CALL l.check_in(1) #{l.check_in(1)} #{l.check_in(2)} #{l.check_in(3)} " 
+puts "CALL l.getCurrentMember.bookBorrowed #{l.getCurrentMember.bookBorrowed}"
+puts "0000000000 #{l.getBookList()}"
+puts "CALL l.getMember()[:ugo].check_out(l.getBookList()[0]) #{l.getMember()[:ugo].check_out(l.getBookList()[0])}"
+puts "CALL l.getBookList()[0].check_out(t) #{l.getBookList()[0].check_out(t)}"
+puts "CALL l.getMember()[:ugo].check_out(l.getBookList()[1]) #{l.getMember()[:ugo].check_out(l.getBookList()[1])}"
+puts "CALL l.getBookList()[0].check_out(t) #{l.getBookList()[1].check_out(t)}"
+puts "CALL find_overdue_books() "; puts"  #{l.find_overdue_books()}"
+
+
+
+
+
+
+
+
+
 
 n=[]
 puts "CALL serve('pep')"; puts"  #{l.serve('pep')}" 
-print "CALL l.getCurrentMember.bookBorrowed ";puts "#{l.getCurrentMember.bookBorrowed}"
+print "CALL l.getCurrentMember.bookBorrowed "; puts "#{l.getCurrentMember.bookBorrowed}"
 sz = (l.getCurrentMember.bookBorrowed.size)
 for i in 0..(sz-1) do
    n.push(l.getCurrentMember.bookBorrowed[i].getId())
