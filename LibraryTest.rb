@@ -4,7 +4,8 @@ require 'Library.rb'
 class LibraryTest < Test::Unit::TestCase 
   def setup
     @l=Library.new()
-  end  
+  end
+  ################################################################################  
   puts "\n__________________________________TESTING_____________________________________"
   def test_exception_on_open
     test_libIsOpen()  
@@ -30,6 +31,7 @@ class LibraryTest < Test::Unit::TestCase
       return
     end
   end
+  ###############  
  # test exception if library is open,customer is served exeption , book overdue id and title, expect Array from overdue  , if not issue one and serve it, 
   def test_exception_on_find_overdue_books() 
     test_libIsOpen() 
@@ -40,11 +42,10 @@ class LibraryTest < Test::Unit::TestCase
       assert_equal(expect1, e.message)
       puts "The custIsServe() OK" # The exception happened, so the test passes
     end 
-    #@l.readFile()# make books list #######################################################
+    #@l.readFile()# make books list ######
     @l.addMember(:ugo, Member.new("ugo","bbkLib"))
     @l.serve('ugo')
-    # set date to be overdue on book1 VIP ####################
-    
+    # set date to be overdue on book1 VIP #### 
     due =(@l.getCalendar().get_date())-(7*24*60*60) 
     puts "CALL @l.getBookList()[0].check_out(due)#{@l.getBookList()[0].check_out(due)}"
     puts "CALL @l.getCurrentMember().check_out(@l.getBookList()[0])#{@l.getCurrentMember().check_out(@l.getBookList()[0])}"
@@ -55,13 +56,8 @@ class LibraryTest < Test::Unit::TestCase
     expectT = Array
     assert_equal(expectT, @l.loopBookArray(@l.getCurrentMember()).class ,msg="expect Array")
     expectT = "bookTitle1" 
-    assert_equal(expectT, overDueArray[1][0].title() ,msg="esp__________book overdue title") 
-    
-    puts "CALL find_all_overdue_books() #{@l.find_all_overdue_books()}"
-    
-    
-    
-          
+    assert_equal(expectT, overDueArray[1][0].title() ,msg="esp__________book overdue title")     
+    puts "CALL find_all_overdue_books() #{@l.find_all_overdue_books()}"       
   end
   def test_libIsOpen() 
     @l.open()
@@ -73,7 +69,7 @@ class LibraryTest < Test::Unit::TestCase
       puts "The libIsOpen() work OK" # The exception happened, so the test passes
     end
   end
- 
+############### 
 # test  customer has card, if is already a member, if not issue one and serve it, 
 def test_on_issue_card()
   test_libIsOpen() 
@@ -93,32 +89,39 @@ def test_on_serve()
   expectT = "Now serving Gim "
   assert_equal(expectT, @l.serve('Gim') ,msg="___Now serving Gim")   
 end 
-####
+###############
 # test exception if no customer is served
 def test_on_custIsServe()
-
   begin
       @l.custIsServe()
     rescue Exception => e # or you can test for specific exceptions
       expect1="No member is currently been served"
       assert_equal(expect1, e.message)
     end  
-
 end 
+################
 # test for all exception and right message is returned if check in successfull  
 def test_on_check_in()
   test_libIsOpen() 
   test_on_custIsServe() 
-  @l.issue_card('ugo'); @l.serve('ugo'); @l.check_out(5);
-  #puts "#{@l.getCurrentMember().bookBorrowed().size}"
-  expectT = "ugo has return book id 5 " 
-  assert_equal(expectT, @l.check_in(5) ,msg="___ugo has return book id 5")
+  @l.issue_card('ugo');
+  @l.serve('ugo');
   begin
-    @l.check_in(3)
+    @l.check_out(50)
   rescue Exception => e # or you can test for specific exceptions
-    expect1=" The current member does't have book id 3"
+    expect1="The library does not have book id 50"
     assert_equal(expect1, e.message)
-  end  
+  end 
+  begin
+    @l.check_in(32)
+  rescue Exception => e # or you can test for specific exceptions
+    expect1="The current member does't have book id 32"
+    assert_equal(expect1, e.message)
+  end 
+ @l.check_out(5); 
+ expectT = "ugo has return book id 5 " 
+ assert_equal(expectT, @l.check_in(5) ,msg="___ugo has return book id 5")
+ 
 end   
 #######################  
 # test for at least 4 char, no book found, find book with search '   saga ArLc tact  ttt1 ', 
@@ -137,9 +140,9 @@ def test_on_search()
   expectT = "id: 1, title bookTitle1, by Author author1id: 2, title bookTitle2, by Author author2id: 3, title bookTitle3, by Author author3id: 5, title bookTitle5, by Author author5"
   assert_equal(expectT, @l.search('   TTTT  autho ') ,msg="___ multiple books found.") 
 end   
-
+########################
 # test for exception trow if id is not in library, if library is close,if cust is served 
-# same book can not be chech-out 2 time, customer can not boroow more than three books
+# same book can not be check-out 2 time, customer can not borrow more than three books
 # every book check_out() increase the array size of book borrowed 
 def test_on_check_out()
   test_libIsOpen() 
@@ -166,22 +169,38 @@ def test_on_check_out()
     assert_equal(expectT,  @l.getCurrentMember().bookBorrowed().size ,msg="___number of book borrow")
     expectT = "Sorry ugo you check out 3 books already"
     assert_equal(expectT,  @l.check_out(4) ,msg="___>3  books borrow")
-end    
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+end
+################################
+# testing exception on renew book id non existent and date is update if successfull     
+def test_on_renew() 
+  test_libIsOpen() 
+  test_on_custIsServe()
+  @l.issue_card('ugo'); @l.serve('ugo');@l.check_out(3) 
+    begin 
+      @l.renew(33) 
+    rescue Exception => e # or you can test for specific exceptions
+      expect1="The member does not have book id 33"
+      assert_equal(expect1, e.message)
+    end 
+  newDate = @l.getCurrentMember().bookBorrowed()[0].get_due_date()+(7*24*60*60)  
+  expectT = "date is renew and now the book will be available from "+newDate.to_s[0..-16]
+  assert_equal(expectT,   @l.renew(3)[0..-16]  ,msg="___ .renew(3) ")      
+end   
+def test_on_close() 
+  test_libIsOpen() 
+  test_on_custIsServe()
+  #print ">>>>>>>>>>#{@l.quit()}"
+  begin 
+    @l.renew(3) 
+  rescue Exception => e # or you can test for specific exceptions
+    expect1="The library is not open"
+    assert_equal(expect1, e.message)
+  end 
+  expectT = "Good night"
+  assert_equal(expectT, @l.close() ,msg="___ @l.close() ")
+  @l.quit() 
+  expectT = "The library is now closed for renovations"
+  assert_equal(expectT, @l.quit() ,msg="___ @l.quit() ")    
+end   
   
  end########### end LibraryTest
